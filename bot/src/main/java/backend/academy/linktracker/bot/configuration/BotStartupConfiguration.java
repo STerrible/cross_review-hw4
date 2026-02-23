@@ -15,11 +15,10 @@ public class BotStartupConfiguration {
 
     @Bean
     @ConditionalOnProperty(
-        prefix = "app.telegram",
-        name = "register-commands",
-        havingValue = "true",
-        matchIfMissing = true
-    )
+            prefix = "app.telegram",
+            name = "register-commands",
+            havingValue = "true",
+            matchIfMissing = true)
     public ApplicationRunner registerCommands() {
         return args -> telegramClient.registerCommands();
     }

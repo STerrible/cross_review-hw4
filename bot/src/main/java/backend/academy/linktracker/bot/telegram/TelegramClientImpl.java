@@ -31,10 +31,8 @@ public class TelegramClientImpl implements TelegramClient {
 
     @Override
     public void registerCommands() {
-        var resp = bot.execute(new SetMyCommands(
-            new BotCommand("start", "Начать работу"),
-            new BotCommand("help", "Список команд")
-        ));
+        var resp = bot.execute(
+                new SetMyCommands(new BotCommand("start", "Начать работу"), new BotCommand("help", "Список команд")));
 
         if (!resp.isOk()) {
             log.error("telegram_set_commands_failed description={}", resp.description());
