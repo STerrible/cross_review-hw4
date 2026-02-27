@@ -40,6 +40,6 @@ public class TelegramUpdatesListener implements UpdatesListener {
 
             updateService.handle(chatId, text);
         }
-        return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        return CONFIRMED_UPDATES_ALL;
     }
 }
