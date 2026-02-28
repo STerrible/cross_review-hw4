@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +50,11 @@ class TelegramBotIntegrationTest implements WithAssertions {
 
     @AfterEach
     void clearUpdatesListener() {
+        telegramBot.removeGetUpdatesListener();
+    }
+
+    @BeforeEach
+    void resetUpdatesListener() {
         telegramBot.removeGetUpdatesListener();
     }
 
