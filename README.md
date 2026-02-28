@@ -11,23 +11,30 @@ FYI: как запустить бота?
 Обратите внимание, что JDK должен быть версии 25 и выше.
 
 ## Запуск приложения
+
 Из корня репозитория:
+
 ```powershell
 .\mvnw.cmd -f bot\pom.xml spring-boot:run
 ```
 
 ## Запуск проверок
+
 Локальный запуск тестов только модуля `bot`:
+
 ```powershell
 .\mvnw.cmd -pl bot -am test
 ```
 
 Проверка форматирования/статики (как в CI):
+
 ```powershell
 .\mvnw.cmd compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
 ```
 
 ## Структура модулей
+
 - `bot` — Telegram Bot API и обработка команд
 - `scrapper` — заготовка сервиса мониторинга источников
 - `ai-agent` — заготовка AI-сервиса
+
