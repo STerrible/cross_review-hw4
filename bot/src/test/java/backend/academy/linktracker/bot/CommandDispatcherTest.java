@@ -2,26 +2,26 @@ package backend.academy.linktracker.bot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import backend.academy.linktracker.bot.command.BotCommand;
 import backend.academy.linktracker.bot.command.CommandDispatcher;
-import backend.academy.linktracker.bot.command.Replies;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class CommandDispatcherTest {
 
+    private static final long CHAT_ID = 100L;
+
     private final CommandDispatcher dispatcher = new CommandDispatcher();
 
-    @Test
-    void startCommandReturnsWelcomeMessage() {
-        assertEquals(Replies.START, dispatcher.dispatch("/start"));
-    }
-
-    @Test
-    void helpCommandReturnsHelpMessage() {
-        assertEquals(Replies.HELP, dispatcher.dispatch("/help"));
-    }
-
-    @Test
-    void unknownCommandReturnsUnknownMessage() {
-        assertEquals(Replies.UNKNOWN, dispatcher.dispatch("/abracadabra"));
+    @ParameterizedTest
+    @CsvSource({
+        "/start, START",
+        "/help, HELP",
+        "/abracadabra, UNKNOWN"
+    })
+    void dispatchReturnsExpectedReply(String inputCommand, BotCommand expectedCommand) {
+        assertEquals(
+            expectedCommand.reply(),
+            dispatcher.dispatch(CHAT_ID, inputCommand).getParameters().get("text"));
     }
 }
