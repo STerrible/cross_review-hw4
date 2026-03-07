@@ -25,10 +25,7 @@ public class UpdateService {
             telegramClient.sendMessage(sendMessage);
             log.atInfo().addKeyValue("chatId", chatId).log("message_sent");
         } catch (RuntimeException exception) {
-            log.atWarn()
-                .addKeyValue("chatId", chatId)
-                .setCause(exception)
-                .log("message_processing_failed");
+            log.atWarn().addKeyValue("chatId", chatId).setCause(exception).log("message_processing_failed");
         }
     }
 }
