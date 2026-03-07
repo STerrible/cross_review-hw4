@@ -14,14 +14,10 @@ class CommandDispatcherTest {
     private final CommandDispatcher dispatcher = new CommandDispatcher();
 
     @ParameterizedTest
-    @CsvSource({
-        "/start, START",
-        "/help, HELP",
-        "/abracadabra, UNKNOWN"
-    })
+    @CsvSource({"/start, START", "/help, HELP", "/abracadabra, UNKNOWN"})
     void dispatchReturnsExpectedReply(String inputCommand, BotCommand expectedCommand) {
         assertEquals(
-            expectedCommand.reply(),
-            dispatcher.dispatch(CHAT_ID, inputCommand).getParameters().get("text"));
+                expectedCommand.reply(),
+                dispatcher.dispatch(CHAT_ID, inputCommand).getParameters().get("text"));
     }
 }

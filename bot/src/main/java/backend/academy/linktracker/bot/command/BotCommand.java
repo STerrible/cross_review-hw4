@@ -11,8 +11,8 @@ public enum BotCommand {
     UNKNOWN("", "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.");
 
     private static final Map<String, BotCommand> COMMANDS = Arrays.stream(values())
-        .filter(command -> !command.commandText.isBlank())
-        .collect(Collectors.toMap(BotCommand::commandText, Function.identity()));
+            .filter(command -> !command.commandText.isBlank())
+            .collect(Collectors.toMap(BotCommand::commandText, Function.identity()));
 
     private final String commandText;
     private final String reply;

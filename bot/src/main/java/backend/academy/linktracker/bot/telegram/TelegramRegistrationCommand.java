@@ -21,7 +21,7 @@ public enum TelegramRegistrationCommand {
 
     public static BotCommand[] toApiCommands() {
         return Arrays.stream(values())
-            .map(TelegramRegistrationCommand::toApiCommand)
-            .toArray(BotCommand[]::new);
+                .map(TelegramRegistrationCommand::toApiCommand)
+                .toArray(BotCommand[]::new);
     }
 }
