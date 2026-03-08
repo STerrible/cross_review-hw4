@@ -14,9 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
+import org.wiremock.spring.EnableWireMock;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@EnableWireMock
 class UpdatesControllerTest {
 
     @LocalServerPort
@@ -27,32 +29,30 @@ class UpdatesControllerTest {
 
     @Test
     void validRequestReturnsOk() {
-        RestClient client =
-                restClientBuilder.baseUrl("http://localhost:" + port).build();
+        RestClient client = restClientBuilder.baseUrl("http://localhost:" + port).build();
 
         ResponseEntity<Void> response = client.post()
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", java.util.List.of(1L)))
-                .retrieve()
-                .toBodilessEntity();
+            .uri("/updates")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", java.util.List.of(1L)))
+            .retrieve()
+            .toBodilessEntity();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     void invalidRequestReturnsBadRequestWithContractErrorBody() {
-        RestClient client =
-                restClientBuilder.baseUrl("http://localhost:" + port).build();
+        RestClient client = restClientBuilder.baseUrl("http://localhost:" + port).build();
 
         ResponseEntity<ApiErrorResponse> response = client.post()
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{}")
-                .exchange((request, httpResponse) -> new ResponseEntity<>(
-                        httpResponse.bodyTo(ApiErrorResponse.class),
-                        httpResponse.getHeaders(),
-                        HttpStatus.valueOf(httpResponse.getStatusCode().value())));
+            .uri("/updates")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body("{}")
+            .exchange((request, httpResponse) -> new ResponseEntity<>(
+                httpResponse.bodyTo(ApiErrorResponse.class),
+                httpResponse.getHeaders(),
+                HttpStatus.valueOf(httpResponse.getStatusCode().value())));
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("400", response.getBody().code());
