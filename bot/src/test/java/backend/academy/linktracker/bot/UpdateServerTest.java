@@ -8,6 +8,7 @@ import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.command.CommandDispatcher;
 import backend.academy.linktracker.bot.model.AddLinkRequest;
 import backend.academy.linktracker.bot.model.LinkResponse;
+import backend.academy.linktracker.bot.model.LinkUpdateRequest;
 import backend.academy.linktracker.bot.model.ListLinksResponse;
 import backend.academy.linktracker.bot.service.UpdateService;
 import backend.academy.linktracker.bot.telegram.TelegramClient;
@@ -26,6 +27,15 @@ class UpdateServiceTest {
 
         assertEquals(100L, telegramClient.lastChatId);
         assertTrue(telegramClient.lastText.contains("/track"));
+    }
+
+    @Test
+    void handleLinkUpdateSwallowsRuntimeExceptionFromTelegramClient() {
+        TelegramClient telegramClient = new ThrowingTelegramClient();
+        UpdateService service = new UpdateService(telegramClient, new CommandDispatcher(new StubScrapperClient()));
+
+        assertDoesNotThrow(() -> service.handleLinkUpdate(
+            new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(100L))));
     }
 
     @Test

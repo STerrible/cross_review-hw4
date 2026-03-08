@@ -30,22 +30,23 @@ public class UpdateService {
             try {
                 telegramClient.sendMessage(chatId, "Не удалось обработать команду. Попробуйте ещё раз позже.");
             } catch (RuntimeException nestedException) {
-                log.atWarn()
-                        .addKeyValue("chatId", chatId)
-                        .setCause(nestedException)
-                        .log("fallback_message_send_failed");
+                log.atWarn().addKeyValue("chatId", chatId).setCause(nestedException).log("fallback_message_send_failed");
             }
         }
     }
 
     public void handleLinkUpdate(LinkUpdateRequest update) {
         String message = "Обнаружено обновление: " + update.url();
+        int sent = 0;
         for (Long chatId : update.tgChatIds()) {
-            telegramClient.sendMessage(chatId, message);
+            try {
+                telegramClient.sendMessage(chatId, message);
+                sent++;
+            } catch (RuntimeException exception) {
+                log.atWarn().addKeyValue("chatId", chatId).setCause(exception).log("update_send_failed");
+            }
         }
-        log.atInfo()
-                .addKeyValue("linkId", update.id())
-                .addKeyValue("chats", update.tgChatIds().size())
-                .log("update_sent");
+        log.atInfo().addKeyValue("linkId", update.id()).addKeyValue("chats", update.tgChatIds().size()).addKeyValue("sent", sent)
+            .log("update_sent");
     }
 }
