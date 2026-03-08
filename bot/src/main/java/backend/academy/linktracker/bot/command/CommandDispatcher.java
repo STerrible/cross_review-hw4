@@ -12,11 +12,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 public class CommandDispatcher {
+
+    private static final Logger log = LoggerFactory.getLogger(CommandDispatcher.class);
 
     private static final String HELP_TEXT = """
         /start — начать работу
@@ -75,7 +79,10 @@ public class CommandDispatcher {
                 try {
                     scrapperClient.registerChat(chatId);
                 } catch (RuntimeException exception) {
-                    // Не блокируем /start из-за недоступности scrapper
+                    log.atWarn()
+                            .addKeyValue("chatId", chatId)
+                            .setCause(exception)
+                            .log("register_chat_failed");
                 }
                 yield new SendMessage(
                         chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
