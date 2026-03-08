@@ -35,7 +35,7 @@ class UpdateServiceTest {
         UpdateService service = new UpdateService(telegramClient, new CommandDispatcher(new StubScrapperClient()));
 
         assertDoesNotThrow(() -> service.handleLinkUpdate(
-            new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(100L))));
+                new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(100L))));
     }
 
     @Test

@@ -30,7 +30,10 @@ public class UpdateService {
             try {
                 telegramClient.sendMessage(chatId, "Не удалось обработать команду. Попробуйте ещё раз позже.");
             } catch (RuntimeException nestedException) {
-                log.atWarn().addKeyValue("chatId", chatId).setCause(nestedException).log("fallback_message_send_failed");
+                log.atWarn()
+                        .addKeyValue("chatId", chatId)
+                        .setCause(nestedException)
+                        .log("fallback_message_send_failed");
             }
         }
     }
@@ -46,7 +49,10 @@ public class UpdateService {
                 log.atWarn().addKeyValue("chatId", chatId).setCause(exception).log("update_send_failed");
             }
         }
-        log.atInfo().addKeyValue("linkId", update.id()).addKeyValue("chats", update.tgChatIds().size()).addKeyValue("sent", sent)
-            .log("update_sent");
+        log.atInfo()
+                .addKeyValue("linkId", update.id())
+                .addKeyValue("chats", update.tgChatIds().size())
+                .addKeyValue("sent", sent)
+                .log("update_sent");
     }
 }
