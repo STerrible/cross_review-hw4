@@ -32,9 +32,9 @@ public class LinkUpdateScheduler {
     public void checkUpdates() {
         for (URI trackedUri : repository.allTrackedUris()) {
             Optional<Instant> updatedAt = clients.stream()
-                .map(client -> client.fetchUpdatedAt(trackedUri))
-                .flatMap(Optional::stream)
-                .max(Comparator.naturalOrder());
+                    .map(client -> client.fetchUpdatedAt(trackedUri))
+                    .flatMap(Optional::stream)
+                    .max(Comparator.naturalOrder());
 
             if (updatedAt.isEmpty()) {
                 continue;
@@ -53,7 +53,10 @@ public class LinkUpdateScheduler {
 
             lastSeenByUri.put(trackedUri, currentUpdatedAt);
             botClient.sendUpdate(new LinkUpdateRequest(0L, trackedUri.toString(), "Обнаружены изменения", chats));
-            log.atInfo().addKeyValue("link", trackedUri).addKeyValue("chats", chats.size()).log("scheduled_update_sent");
+            log.atInfo()
+                    .addKeyValue("link", trackedUri)
+                    .addKeyValue("chats", chats.size())
+                    .log("scheduled_update_sent");
         }
     }
 }
