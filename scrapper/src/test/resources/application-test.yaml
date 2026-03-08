@@ -1,0 +1,10 @@
+app:
+  github:
+    token: test
+  stackoverflow:
+    key: test
+    access-token: test
+  bot:
+    base-url: http://localhost:8080
+  scheduler:
+    interval: 1h

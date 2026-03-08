@@ -5,7 +5,11 @@ import java.util.Arrays;
 
 public enum TelegramRegistrationCommand {
     START("start", "Начать работу"),
-    HELP("help", "Список команд");
+    HELP("help", "Список команд"),
+    TRACK("track", "Добавить ссылку в отслеживание"),
+    UNTRACK("untrack", "Удалить ссылку из отслеживания"),
+    LIST("list", "Показать список ссылок"),
+    CANCEL("cancel", "Отменить диалог");
 
     private final String command;
     private final String description;

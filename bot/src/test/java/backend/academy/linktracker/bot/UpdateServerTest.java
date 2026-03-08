@@ -2,10 +2,17 @@ package backend.academy.linktracker.bot;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.command.CommandDispatcher;
+import backend.academy.linktracker.bot.model.AddLinkRequest;
+import backend.academy.linktracker.bot.model.LinkResponse;
+import backend.academy.linktracker.bot.model.ListLinksResponse;
 import backend.academy.linktracker.bot.service.UpdateService;
 import backend.academy.linktracker.bot.telegram.TelegramClient;
+import java.net.URI;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class UpdateServiceTest {
@@ -13,18 +20,18 @@ class UpdateServiceTest {
     @Test
     void handleSendsDispatchedReplyToTelegramClient() {
         RecordingTelegramClient telegramClient = new RecordingTelegramClient();
-        UpdateService service = new UpdateService(telegramClient, new CommandDispatcher());
+        UpdateService service = new UpdateService(telegramClient, new CommandDispatcher(new StubScrapperClient()));
 
         service.handle(100L, "/help");
 
         assertEquals(100L, telegramClient.lastChatId);
-        assertEquals("/start — начать работу\n/help — список доступных команд", telegramClient.lastText);
+        assertTrue(telegramClient.lastText.contains("/track"));
     }
 
     @Test
     void handleSwallowsRuntimeExceptionFromTelegramClient() {
         TelegramClient telegramClient = new ThrowingTelegramClient();
-        UpdateService service = new UpdateService(telegramClient, new CommandDispatcher());
+        UpdateService service = new UpdateService(telegramClient, new CommandDispatcher(new StubScrapperClient()));
 
         assertDoesNotThrow(() -> service.handle(100L, "/help"));
     }
@@ -52,5 +59,26 @@ class UpdateServiceTest {
 
         @Override
         public void registerCommands() {}
+    }
+
+    private static final class StubScrapperClient implements ScrapperClient {
+
+        @Override
+        public void registerChat(long chatId) {}
+
+        @Override
+        public LinkResponse addLink(long chatId, AddLinkRequest request) {
+            return new LinkResponse(1L, request.link(), request.tags(), request.filters());
+        }
+
+        @Override
+        public LinkResponse removeLink(long chatId, URI link) {
+            return new LinkResponse(1L, link, List.of(), List.of());
+        }
+
+        @Override
+        public ListLinksResponse getLinks(long chatId) {
+            return new ListLinksResponse(List.of(), 0);
+        }
     }
 }
