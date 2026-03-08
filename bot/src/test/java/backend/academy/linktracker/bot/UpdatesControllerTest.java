@@ -32,14 +32,14 @@ class UpdatesControllerTest {
     @Test
     void validRequestReturnsOk() {
         RestClient client =
-                restClientBuilder.baseUrl("http://localhost:" + port).build();
+            restClientBuilder.baseUrl("http://localhost:" + port).build();
 
         ResponseEntity<Void> response = client.post()
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(1L)))
-                .retrieve()
-                .toBodilessEntity();
+            .uri("/updates")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(1L)))
+            .retrieve()
+            .toBodilessEntity();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
@@ -47,16 +47,19 @@ class UpdatesControllerTest {
     @Test
     void invalidRequestReturnsBadRequestWithContractErrorBody() {
         RestClient client =
-                restClientBuilder.baseUrl("http://localhost:" + port).build();
+            restClientBuilder.baseUrl("http://localhost:" + port).build();
 
         ResponseEntity<ApiErrorResponse> response = client.post()
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{}")
-                .exchange((request, httpResponse) -> new ResponseEntity<>(
-                        httpResponse.bodyTo(ApiErrorResponse.class),
-                        httpResponse.getHeaders(),
-                        HttpStatus.valueOf(httpResponse.getStatusCode().value())));
+            .uri("/updates")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body("{}")
+            .exchange((request, httpResponse) -> {
+                request.getHeaders();
+                return new ResponseEntity<>(
+                    httpResponse.bodyTo(ApiErrorResponse.class),
+                    httpResponse.getHeaders(),
+                    HttpStatus.valueOf(httpResponse.getStatusCode().value()));
+            });
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
