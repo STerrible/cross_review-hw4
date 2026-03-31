@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
 import backend.academy.linktracker.bot.command.CommandDispatcher;
+import backend.academy.linktracker.bot.model.AddLinkRequest;
+import backend.academy.linktracker.bot.model.LinkResponse;
 import backend.academy.linktracker.bot.model.ListLinksResponse;
+import backend.academy.linktracker.bot.service.LinkService;
 import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -15,18 +18,20 @@ class CommandDispatcherTest {
 
     @Test
     void unknownCommandReturnsUnknownReply() {
-        CommandDispatcher dispatcher = new CommandDispatcher(new StubScrapperClient());
+        ScrapperClient scrapperClient = new StubScrapperClient();
+        CommandDispatcher dispatcher = new CommandDispatcher(scrapperClient, new LinkService(scrapperClient));
         assertEquals(
-                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.",
-                dispatcher.dispatch(CHAT_ID, "/abracadabra").getParameters().get("text"));
+            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.",
+            dispatcher.dispatch(CHAT_ID, "/abracadabra").getParameters().get("text"));
     }
 
     @Test
     void listCommandReturnsEmptyMessage() {
-        CommandDispatcher dispatcher = new CommandDispatcher(new StubScrapperClient());
+        ScrapperClient scrapperClient = new StubScrapperClient();
+        CommandDispatcher dispatcher = new CommandDispatcher(scrapperClient, new LinkService(scrapperClient));
         assertEquals(
-                "Список отслеживаемых ссылок пуст.",
-                dispatcher.dispatch(CHAT_ID, "/list").getParameters().get("text"));
+            "Список отслеживаемых ссылок пуст.",
+            dispatcher.dispatch(CHAT_ID, "/list").getParameters().get("text"));
     }
 
     private static class StubScrapperClient implements ScrapperClient {
@@ -35,15 +40,13 @@ class CommandDispatcherTest {
         public void registerChat(long chatId) {}
 
         @Override
-        public backend.academy.linktracker.bot.model.LinkResponse addLink(
-                long chatId, backend.academy.linktracker.bot.model.AddLinkRequest request) {
-            return new backend.academy.linktracker.bot.model.LinkResponse(
-                    1L, request.link(), request.tags(), request.filters());
+        public LinkResponse addLink(long chatId, AddLinkRequest request) {
+            return new LinkResponse(1L, request.link(), request.tags(), request.filters());
         }
 
         @Override
-        public backend.academy.linktracker.bot.model.LinkResponse removeLink(long chatId, URI link) {
-            return new backend.academy.linktracker.bot.model.LinkResponse(1L, link, List.of(), List.of());
+        public LinkResponse removeLink(long chatId, URI link) {
+            return new LinkResponse(1L, link, List.of(), List.of());
         }
 
         @Override

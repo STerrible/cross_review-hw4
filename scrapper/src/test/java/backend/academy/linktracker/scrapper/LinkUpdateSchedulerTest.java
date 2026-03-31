@@ -34,6 +34,7 @@ class LinkUpdateSchedulerTest {
         scheduler.checkUpdates();
 
         assertEquals(1, botClient.calls.get());
+        assertEquals(1L, botClient.lastUpdate.id());
         assertEquals(List.of(1L, 2L), botClient.lastUpdate.tgChatIds());
     }
 

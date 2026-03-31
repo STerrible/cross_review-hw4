@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,17 +33,25 @@ public class LinkUpdateScheduler {
     public void checkUpdates() {
         for (URI trackedUri : repository.allTrackedUris()) {
             Optional<Instant> updatedAt = clients.stream()
-                    .map(client -> client.fetchUpdatedAt(trackedUri))
-                    .flatMap(Optional::stream)
-                    .max(Comparator.naturalOrder());
+                .map(client -> client.fetchUpdatedAt(trackedUri))
+                .flatMap(Optional::stream)
+                .max(Comparator.naturalOrder());
 
             if (updatedAt.isEmpty()) {
                 continue;
             }
 
             Instant currentUpdatedAt = updatedAt.orElseThrow();
-            Instant lastSeen = lastSeenByUri.getOrDefault(trackedUri, Instant.EPOCH);
-            if (!currentUpdatedAt.isAfter(lastSeen)) {
+            AtomicBoolean shouldSendUpdate = new AtomicBoolean(false);
+            lastSeenByUri.compute(trackedUri, (uri, lastSeen) -> {
+                Instant knownLastSeen = lastSeen == null ? Instant.EPOCH : lastSeen;
+                if (currentUpdatedAt.isAfter(knownLastSeen)) {
+                    shouldSendUpdate.set(true);
+                    return currentUpdatedAt;
+                }
+                return knownLastSeen;
+            });
+            if (!shouldSendUpdate.get()) {
                 continue;
             }
 
@@ -51,12 +60,13 @@ public class LinkUpdateScheduler {
                 continue;
             }
 
-            lastSeenByUri.put(trackedUri, currentUpdatedAt);
-            botClient.sendUpdate(new LinkUpdateRequest(0L, trackedUri.toString(), "Обнаружены изменения", chats));
+            long linkId = repository.linkId(trackedUri).orElseThrow();
+            botClient.sendUpdate(new LinkUpdateRequest(linkId, trackedUri.toString(), "Обнаружены изменения", chats));
             log.atInfo()
-                    .addKeyValue("link", trackedUri)
-                    .addKeyValue("chats", chats.size())
-                    .log("scheduled_update_sent");
+                .addKeyValue("link", trackedUri)
+                .addKeyValue("linkId", linkId)
+                .addKeyValue("chats", chats.size())
+                .log("scheduled_update_sent");
         }
     }
 }

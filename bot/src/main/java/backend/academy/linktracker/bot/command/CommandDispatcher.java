@@ -1,9 +1,8 @@
 package backend.academy.linktracker.bot.command;
 
 import backend.academy.linktracker.bot.client.ScrapperClient;
-import backend.academy.linktracker.bot.model.AddLinkRequest;
 import backend.academy.linktracker.bot.model.LinkResponse;
-import backend.academy.linktracker.bot.model.ListLinksResponse;
+import backend.academy.linktracker.bot.service.LinkService;
 import backend.academy.linktracker.bot.service.state.ChatState;
 import backend.academy.linktracker.bot.service.state.TrackState;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -15,27 +14,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Component
 public class CommandDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(CommandDispatcher.class);
 
-    private static final String HELP_TEXT = """
-        /start — начать работу
-        /help — список доступных команд
-        /track — добавить ссылку в отслеживание
-        /untrack — удалить ссылку из отслеживания
-        /list [tag] — показать отслеживаемые ссылки
-        /cancel — отменить текущий диалог
-        """;
-
     private final ScrapperClient scrapperClient;
+    private final LinkService linkService;
     private final Map<Long, ChatState> states = new ConcurrentHashMap<>();
 
-    public CommandDispatcher(ScrapperClient scrapperClient) {
+    public CommandDispatcher(ScrapperClient scrapperClient, LinkService linkService) {
         this.scrapperClient = scrapperClient;
+        this.linkService = linkService;
     }
 
     public SendMessage dispatch(long chatId, String messageText) {
@@ -80,14 +71,14 @@ public class CommandDispatcher {
                     scrapperClient.registerChat(chatId);
                 } catch (RuntimeException exception) {
                     log.atWarn()
-                            .addKeyValue("chatId", chatId)
-                            .setCause(exception)
-                            .log("register_chat_failed");
+                        .addKeyValue("chatId", chatId)
+                        .setCause(exception)
+                        .log("register_chat_failed");
                 }
                 yield new SendMessage(
-                        chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
+                    chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
             }
-            case HELP -> new SendMessage(chatId, HELP_TEXT);
+            case HELP -> new SendMessage(chatId, BotMessages.HELP_TEXT);
             case TRACK -> {
                 states.put(chatId, new ChatState(TrackState.WAITING_TRACK_LINK, null));
                 yield new SendMessage(chatId, "Отправьте ссылку для отслеживания.");
@@ -100,7 +91,7 @@ public class CommandDispatcher {
             case CANCEL -> new SendMessage(chatId, "Сейчас нечего отменять.");
             case UNKNOWN ->
                 new SendMessage(
-                        chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.");
+                    chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.");
         };
     }
 
@@ -116,25 +107,28 @@ public class CommandDispatcher {
 
     private SendMessage handleTrackTags(long chatId, URI link, String text) {
         List<String> tags = Arrays.stream(text.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .toList();
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .toList();
 
-        try {
-            scrapperClient.addLink(chatId, new AddLinkRequest(link, tags, List.of()));
-            states.put(chatId, ChatState.idle());
-            return new SendMessage(chatId, "Ссылка добавлена в отслеживание.");
-        } catch (HttpClientErrorException.Conflict exception) {
-            states.put(chatId, ChatState.idle());
-            return new SendMessage(chatId, "Ссылка уже отслеживается");
-        } catch (HttpClientErrorException.NotFound exception) {
-            states.put(chatId, ChatState.idle());
-            return new SendMessage(chatId, "Чат не зарегистрирован. Отправьте /start и повторите попытку.");
-        } catch (RuntimeException exception) {
-            return new SendMessage(
-                    chatId,
-                    "Не удалось сохранить ссылку: Scrapper недоступен. Повторите ввод тегов или отправьте /cancel.");
-        }
+        LinkService.AddLinkResult result = linkService.addLink(chatId, link, tags);
+        return switch (result) {
+            case SUCCESS -> {
+                states.put(chatId, ChatState.idle());
+                yield new SendMessage(chatId, "Ссылка добавлена в отслеживание.");
+            }
+            case ALREADY_TRACKED -> {
+                states.put(chatId, ChatState.idle());
+                yield new SendMessage(chatId, "Ссылка уже отслеживается");
+            }
+            case CHAT_NOT_REGISTERED -> {
+                states.put(chatId, ChatState.idle());
+                yield new SendMessage(chatId, "Чат не зарегистрирован. Отправьте /start и повторите попытку.");
+            }
+            case SCRAPPER_UNAVAILABLE -> new SendMessage(
+                chatId,
+                "Не удалось сохранить ссылку: Scrapper недоступен. Повторите ввод тегов или отправьте /cancel.");
+        };
     }
 
     private SendMessage handleUntrackLink(long chatId, String text) {
@@ -143,43 +137,45 @@ public class CommandDispatcher {
             return new SendMessage(chatId, "Некорректная ссылка. Введите корректный URL (http/https).");
         }
 
-        try {
-            LinkResponse response = scrapperClient.removeLink(chatId, link);
-            states.put(chatId, ChatState.idle());
-            return new SendMessage(chatId, "Ссылка удалена из отслеживания: " + response.url());
-        } catch (HttpClientErrorException exception) {
-            states.put(chatId, ChatState.idle());
-            return new SendMessage(chatId, "Ссылка не найдена в отслеживаемых.");
-        } catch (RuntimeException exception) {
-            return new SendMessage(
-                    chatId,
-                    "Не удалось удалить ссылку: Scrapper недоступен. Повторите ввод ссылки или отправьте /cancel.");
-        }
+        LinkService.RemoveLinkResult result = linkService.removeLink(chatId, link);
+        return switch (result.status()) {
+            case SUCCESS -> {
+                LinkResponse response = result.removedLink();
+                states.put(chatId, ChatState.idle());
+                yield new SendMessage(chatId, "Ссылка удалена из отслеживания: " + response.url());
+            }
+            case LINK_NOT_FOUND -> {
+                states.put(chatId, ChatState.idle());
+                yield new SendMessage(chatId, "Ссылка не найдена в отслеживаемых.");
+            }
+            case SCRAPPER_UNAVAILABLE -> new SendMessage(
+                chatId,
+                "Не удалось удалить ссылку: Scrapper недоступен. Повторите ввод ссылки или отправьте /cancel.");
+        };
     }
 
     private SendMessage formatList(long chatId, String tagFilter) {
-        List<LinkResponse> links;
-        try {
-            ListLinksResponse response = scrapperClient.getLinks(chatId);
-            links = response.links();
-        } catch (RuntimeException exception) {
+        LinkService.ListLinksResult result = linkService.getLinks(chatId);
+        if (result.status() == LinkService.ListLinksStatus.CHAT_NOT_REGISTERED) {
+            return new SendMessage(chatId, "Чат не зарегистрирован. Отправьте /start и повторите попытку.");
+        }
+        if (result.status() == LinkService.ListLinksStatus.SCRAPPER_UNAVAILABLE) {
             return new SendMessage(chatId, "Не удалось получить список ссылок: Scrapper недоступен.");
         }
+        List<LinkResponse> links = result.links();
 
         if (tagFilter != null && !tagFilter.isBlank()) {
             links = links.stream()
-                    .filter(link -> link.tags() != null && link.tags().stream().anyMatch(tagFilter::equalsIgnoreCase))
-                    .toList();
+                .filter(link -> link.tags() != null && link.tags().stream().anyMatch(tagFilter::equalsIgnoreCase))
+                .toList();
         }
 
         if (links.isEmpty()) {
             return new SendMessage(chatId, "Список отслеживаемых ссылок пуст.");
         }
 
-        String body = links.stream()
-                .map(link -> "• " + link.url() + formatTags(link.tags()))
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("Список отслеживаемых ссылок пуст.");
+        String body = String.join(
+            "\n", links.stream().map(link -> "• " + link.url() + formatTags(link.tags())).toList());
 
         return new SendMessage(chatId, body);
     }
