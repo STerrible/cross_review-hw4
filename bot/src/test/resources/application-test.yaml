@@ -5,3 +5,5 @@ app:
     register-commands: false
     update-listener-sleep: 1s
     debug: true
+  scrapper:
+    base-url: http://localhost:18081

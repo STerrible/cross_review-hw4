@@ -1,5 +1,6 @@
 package backend.academy.linktracker.bot.telegram;
 
+import backend.academy.linktracker.bot.command.BotCommand;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
@@ -36,7 +37,7 @@ public class TelegramClientImpl implements TelegramClient {
     @Override
     public void registerCommands() {
         try {
-            var response = bot.execute(new SetMyCommands(TelegramRegistrationCommand.toApiCommands()));
+            var response = bot.execute(new SetMyCommands(BotCommand.toApiCommands()));
             if (!response.isOk()) {
                 log.warn("telegram_set_commands_failed");
                 return;

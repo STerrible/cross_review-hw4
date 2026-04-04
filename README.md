@@ -18,6 +18,12 @@ FYI: как запустить бота?
 .\mvnw.cmd -f bot\pom.xml spring-boot:run
 ```
 
+## Запуск Scrapper
+
+```powershell
+./mvnw -f scrapper/pom.xml spring-boot:run
+```
+
 ## Запуск проверок
 
 Локальный запуск тестов только модуля `bot`:

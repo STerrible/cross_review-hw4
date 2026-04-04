@@ -4,16 +4,16 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "app.stackoverflow")
+@ConfigurationProperties(prefix = "app.bot")
 @Getter
 @Setter
 @EqualsAndHashCode
 @NoArgsConstructor
-public class StackoverflowProperties {
+public class BotClientProperties {
 
-    private String key;
-
-    private String accessToken;
+    @URL
+    private String baseUrl;
 }
