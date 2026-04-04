@@ -2,7 +2,6 @@ package backend.academy.linktracker.scrapper.controller;
 
 import backend.academy.linktracker.scrapper.service.ScrapperService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +19,7 @@ public class TgChatController {
     @PostMapping("/{id}")
     public ResponseEntity<Void> registerChat(@PathVariable long id) {
         scrapperService.registerChat(id);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

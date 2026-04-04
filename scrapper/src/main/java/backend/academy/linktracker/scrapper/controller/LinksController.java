@@ -7,7 +7,6 @@ import backend.academy.linktracker.scrapper.model.RemoveLinkRequest;
 import backend.academy.linktracker.scrapper.service.ScrapperService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +31,7 @@ public class LinksController {
     @PostMapping
     public ResponseEntity<LinkResponse> add(
         @RequestHeader(ApiHeaders.TG_CHAT_ID) long chatId, @Valid @RequestBody AddLinkRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(scrapperService.addLink(chatId, request));
+        return ResponseEntity.ok(scrapperService.addLink(chatId, request));
     }
 
     @DeleteMapping

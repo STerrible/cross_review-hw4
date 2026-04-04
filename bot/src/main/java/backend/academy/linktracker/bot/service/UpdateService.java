@@ -1,7 +1,7 @@
 package backend.academy.linktracker.bot.service;
 
-import backend.academy.linktracker.bot.command.CommandDispatcher;
 import backend.academy.linktracker.bot.command.BotMessages;
+import backend.academy.linktracker.bot.command.CommandDispatcher;
 import backend.academy.linktracker.bot.model.LinkUpdateRequest;
 import backend.academy.linktracker.bot.telegram.TelegramClient;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -32,10 +32,7 @@ public class UpdateService {
             try {
                 telegramClient.sendMessage(chatId, BotMessages.FALLBACK_PROCESSING_ERROR);
             } catch (RuntimeException nestedException) {
-                log.atWarn()
-                    .addKeyValue("chatId", chatId)
-                    .setCause(nestedException)
-                    .log("fallback_message_send_failed");
+                log.atWarn().addKeyValue("chatId", chatId).setCause(nestedException).log("fallback_message_send_failed");
             }
         }
     }
