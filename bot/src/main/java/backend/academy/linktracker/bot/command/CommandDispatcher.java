@@ -71,12 +71,12 @@ public class CommandDispatcher {
                     scrapperClient.registerChat(chatId);
                 } catch (RuntimeException exception) {
                     log.atWarn()
-                        .addKeyValue("chatId", chatId)
-                        .setCause(exception)
-                        .log("register_chat_failed");
+                            .addKeyValue("chatId", chatId)
+                            .setCause(exception)
+                            .log("register_chat_failed");
                 }
                 yield new SendMessage(
-                    chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
+                        chatId, "Добро пожаловать! Используйте /help, чтобы посмотреть доступные команды.");
             }
             case HELP -> new SendMessage(chatId, BotMessages.HELP_TEXT);
             case TRACK -> {
@@ -91,7 +91,7 @@ public class CommandDispatcher {
             case CANCEL -> new SendMessage(chatId, "Сейчас нечего отменять.");
             case UNKNOWN ->
                 new SendMessage(
-                    chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.");
+                        chatId, "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.");
         };
     }
 
@@ -107,9 +107,9 @@ public class CommandDispatcher {
 
     private SendMessage handleTrackTags(long chatId, URI link, String text) {
         List<String> tags = Arrays.stream(text.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isBlank())
-            .toList();
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
 
         LinkService.AddLinkResult result = linkService.addLink(chatId, link, tags);
         return switch (result) {
@@ -125,9 +125,10 @@ public class CommandDispatcher {
                 states.put(chatId, ChatState.idle());
                 yield new SendMessage(chatId, "Чат не зарегистрирован. Отправьте /start и повторите попытку.");
             }
-            case SCRAPPER_UNAVAILABLE -> new SendMessage(
-                chatId,
-                "Не удалось сохранить ссылку: Scrapper недоступен. Повторите ввод тегов или отправьте /cancel.");
+            case SCRAPPER_UNAVAILABLE ->
+                new SendMessage(
+                        chatId,
+                        "Не удалось сохранить ссылку: Scrapper недоступен. Повторите ввод тегов или отправьте /cancel.");
         };
     }
 
@@ -148,9 +149,10 @@ public class CommandDispatcher {
                 states.put(chatId, ChatState.idle());
                 yield new SendMessage(chatId, "Ссылка не найдена в отслеживаемых.");
             }
-            case SCRAPPER_UNAVAILABLE -> new SendMessage(
-                chatId,
-                "Не удалось удалить ссылку: Scrapper недоступен. Повторите ввод ссылки или отправьте /cancel.");
+            case SCRAPPER_UNAVAILABLE ->
+                new SendMessage(
+                        chatId,
+                        "Не удалось удалить ссылку: Scrapper недоступен. Повторите ввод ссылки или отправьте /cancel.");
         };
     }
 
@@ -166,8 +168,8 @@ public class CommandDispatcher {
 
         if (tagFilter != null && !tagFilter.isBlank()) {
             links = links.stream()
-                .filter(link -> link.tags() != null && link.tags().stream().anyMatch(tagFilter::equalsIgnoreCase))
-                .toList();
+                    .filter(link -> link.tags() != null && link.tags().stream().anyMatch(tagFilter::equalsIgnoreCase))
+                    .toList();
         }
 
         if (links.isEmpty()) {
@@ -175,7 +177,10 @@ public class CommandDispatcher {
         }
 
         String body = String.join(
-            "\n", links.stream().map(link -> "• " + link.url() + formatTags(link.tags())).toList());
+                "\n",
+                links.stream()
+                        .map(link -> "• " + link.url() + formatTags(link.tags()))
+                        .toList());
 
         return new SendMessage(chatId, body);
     }

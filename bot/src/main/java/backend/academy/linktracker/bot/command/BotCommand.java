@@ -15,8 +15,8 @@ public enum BotCommand {
     UNKNOWN("", "");
 
     private static final Map<String, BotCommand> COMMANDS = Arrays.stream(values())
-        .filter(command -> !command.commandText.isBlank())
-        .collect(Collectors.toMap(BotCommand::commandText, Function.identity()));
+            .filter(command -> !command.commandText.isBlank())
+            .collect(Collectors.toMap(BotCommand::commandText, Function.identity()));
 
     private final String commandText;
     private final String description;
@@ -40,8 +40,8 @@ public enum BotCommand {
 
     public static com.pengrad.telegrambot.model.BotCommand[] toApiCommands() {
         return Arrays.stream(values())
-            .filter(command -> !command.commandText.isBlank())
-            .map(BotCommand::toApiCommand)
-            .toArray(com.pengrad.telegrambot.model.BotCommand[]::new);
+                .filter(command -> !command.commandText.isBlank())
+                .map(BotCommand::toApiCommand)
+                .toArray(com.pengrad.telegrambot.model.BotCommand[]::new);
     }
 }

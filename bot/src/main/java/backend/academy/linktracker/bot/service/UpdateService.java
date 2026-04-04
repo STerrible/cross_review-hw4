@@ -32,7 +32,10 @@ public class UpdateService {
             try {
                 telegramClient.sendMessage(chatId, BotMessages.FALLBACK_PROCESSING_ERROR);
             } catch (RuntimeException nestedException) {
-                log.atWarn().addKeyValue("chatId", chatId).setCause(nestedException).log("fallback_message_send_failed");
+                log.atWarn()
+                        .addKeyValue("chatId", chatId)
+                        .setCause(nestedException)
+                        .log("fallback_message_send_failed");
             }
         }
     }
@@ -49,9 +52,9 @@ public class UpdateService {
             }
         });
         log.atInfo()
-            .addKeyValue("linkId", update.id())
-            .addKeyValue("chats", update.tgChatIds().size())
-            .addKeyValue("sent", sent.get())
-            .log("update_sent");
+                .addKeyValue("linkId", update.id())
+                .addKeyValue("chats", update.tgChatIds().size())
+                .addKeyValue("sent", sent.get())
+                .log("update_sent");
     }
 }

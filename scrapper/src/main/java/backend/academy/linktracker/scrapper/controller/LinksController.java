@@ -30,13 +30,13 @@ public class LinksController {
 
     @PostMapping
     public ResponseEntity<LinkResponse> add(
-        @RequestHeader(ApiHeaders.TG_CHAT_ID) long chatId, @Valid @RequestBody AddLinkRequest request) {
+            @RequestHeader(ApiHeaders.TG_CHAT_ID) long chatId, @Valid @RequestBody AddLinkRequest request) {
         return ResponseEntity.ok(scrapperService.addLink(chatId, request));
     }
 
     @DeleteMapping
     public ResponseEntity<LinkResponse> remove(
-        @RequestHeader(ApiHeaders.TG_CHAT_ID) long chatId, @Valid @RequestBody RemoveLinkRequest request) {
+            @RequestHeader(ApiHeaders.TG_CHAT_ID) long chatId, @Valid @RequestBody RemoveLinkRequest request) {
         return ResponseEntity.ok(scrapperService.removeLink(chatId, request.link()));
     }
 }

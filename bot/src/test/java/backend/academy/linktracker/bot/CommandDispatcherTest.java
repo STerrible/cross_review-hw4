@@ -21,8 +21,8 @@ class CommandDispatcherTest {
         ScrapperClient scrapperClient = new StubScrapperClient();
         CommandDispatcher dispatcher = new CommandDispatcher(scrapperClient, new LinkService(scrapperClient));
         assertEquals(
-            "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.",
-            dispatcher.dispatch(CHAT_ID, "/abracadabra").getParameters().get("text"));
+                "Неизвестная команда. Воспользуйтесь /help, чтобы посмотреть список доступных команд.",
+                dispatcher.dispatch(CHAT_ID, "/abracadabra").getParameters().get("text"));
     }
 
     @Test
@@ -30,8 +30,8 @@ class CommandDispatcherTest {
         ScrapperClient scrapperClient = new StubScrapperClient();
         CommandDispatcher dispatcher = new CommandDispatcher(scrapperClient, new LinkService(scrapperClient));
         assertEquals(
-            "Список отслеживаемых ссылок пуст.",
-            dispatcher.dispatch(CHAT_ID, "/list").getParameters().get("text"));
+                "Список отслеживаемых ссылок пуст.",
+                dispatcher.dispatch(CHAT_ID, "/list").getParameters().get("text"));
     }
 
     private static class StubScrapperClient implements ScrapperClient {

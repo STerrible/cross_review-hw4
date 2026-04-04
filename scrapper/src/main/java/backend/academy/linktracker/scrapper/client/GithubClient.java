@@ -25,11 +25,11 @@ public class GithubClient implements LinkSourceClient {
 
     public GithubClient(RestClient.Builder builder, GithubProperties properties) {
         this.restClient = builder.baseUrl(GITHUB_API_BASE_URL)
-            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getToken())
-            .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.github+json")
-            .defaultHeader("X-GitHub-Api-Version", GITHUB_API_VERSION)
-            .defaultHeader(HttpHeaders.USER_AGENT, USER_AGENT)
-            .build();
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getToken())
+                .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.github+json")
+                .defaultHeader("X-GitHub-Api-Version", GITHUB_API_VERSION)
+                .defaultHeader(HttpHeaders.USER_AGENT, USER_AGENT)
+                .build();
     }
 
     @Override
@@ -39,25 +39,25 @@ public class GithubClient implements LinkSourceClient {
         }
 
         String[] segments = Arrays.stream(uri.getPath().split("/"))
-            .filter(part -> !part.isBlank())
-            .toArray(String[]::new);
+                .filter(part -> !part.isBlank())
+                .toArray(String[]::new);
         if (segments.length < 2) {
             return Optional.empty();
         }
 
         try {
             RepoResponse response = restClient
-                .get()
-                .uri("/repos/{owner}/{repo}", segments[0], segments[1])
-                .retrieve()
-                .body(RepoResponse.class);
+                    .get()
+                    .uri("/repos/{owner}/{repo}", segments[0], segments[1])
+                    .retrieve()
+                    .body(RepoResponse.class);
             return response == null ? Optional.empty() : Optional.ofNullable(response.updatedAt());
         } catch (HttpClientErrorException exception) {
             log.atWarn()
-                .addKeyValue("uri", uri)
-                .addKeyValue("status", exception.getStatusCode().value())
-                .setCause(exception)
-                .log("github_fetch_failed");
+                    .addKeyValue("uri", uri)
+                    .addKeyValue("status", exception.getStatusCode().value())
+                    .setCause(exception)
+                    .log("github_fetch_failed");
             return Optional.empty();
         } catch (RuntimeException exception) {
             log.atWarn().addKeyValue("uri", uri).setCause(exception).log("github_fetch_failed");
@@ -66,6 +66,6 @@ public class GithubClient implements LinkSourceClient {
     }
 
     private record RepoResponse(
-        @com.fasterxml.jackson.annotation.JsonProperty("updated_at")
-        Instant updatedAt) {}
+            @com.fasterxml.jackson.annotation.JsonProperty("updated_at")
+            Instant updatedAt) {}
 }

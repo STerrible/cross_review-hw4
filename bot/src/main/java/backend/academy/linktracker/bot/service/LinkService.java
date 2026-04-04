@@ -44,7 +44,7 @@ public class LinkService {
     public ListLinksResult getLinks(long chatId) {
         try {
             return new ListLinksResult(
-                ListLinksStatus.SUCCESS, scrapperClient.getLinks(chatId).links());
+                    ListLinksStatus.SUCCESS, scrapperClient.getLinks(chatId).links());
         } catch (HttpClientErrorException.NotFound exception) {
             return new ListLinksResult(ListLinksStatus.CHAT_NOT_REGISTERED, List.of());
         } catch (RuntimeException exception) {

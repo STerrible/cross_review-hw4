@@ -40,11 +40,12 @@ public class StackoverflowClient implements LinkSourceClient {
 
         try {
             RestClient.RequestHeadersSpec<?> request = restClient.get().uri(uriBuilder -> uriBuilder
-                .path("/questions/{id}")
-                .queryParam("site", "stackoverflow")
-                .queryParam("key", properties.getKey())
-                .build(parts[2]));
-            if (properties.getAccessToken() != null && !properties.getAccessToken().isBlank()) {
+                    .path("/questions/{id}")
+                    .queryParam("site", "stackoverflow")
+                    .queryParam("key", properties.getKey())
+                    .build(parts[2]));
+            if (properties.getAccessToken() != null
+                    && !properties.getAccessToken().isBlank()) {
                 request.header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getAccessToken());
             }
             QuestionsResponse response = request.retrieve().body(QuestionsResponse.class);
@@ -52,13 +53,13 @@ public class StackoverflowClient implements LinkSourceClient {
                 return Optional.empty();
             }
             return Optional.ofNullable(response.items().getFirst().lastActivityDate())
-                .map(Instant::ofEpochSecond);
+                    .map(Instant::ofEpochSecond);
         } catch (HttpClientErrorException exception) {
             log.atWarn()
-                .addKeyValue("uri", uri)
-                .addKeyValue("status", exception.getStatusCode().value())
-                .setCause(exception)
-                .log("stackoverflow_fetch_failed");
+                    .addKeyValue("uri", uri)
+                    .addKeyValue("status", exception.getStatusCode().value())
+                    .setCause(exception)
+                    .log("stackoverflow_fetch_failed");
             return Optional.empty();
         } catch (RuntimeException exception) {
             log.atWarn().addKeyValue("uri", uri).setCause(exception).log("stackoverflow_fetch_failed");
@@ -69,6 +70,6 @@ public class StackoverflowClient implements LinkSourceClient {
     private record QuestionsResponse(List<QuestionResponse> items) {}
 
     private record QuestionResponse(
-        @com.fasterxml.jackson.annotation.JsonProperty("last_activity_date")
-        Long lastActivityDate) {}
+            @com.fasterxml.jackson.annotation.JsonProperty("last_activity_date")
+            Long lastActivityDate) {}
 }

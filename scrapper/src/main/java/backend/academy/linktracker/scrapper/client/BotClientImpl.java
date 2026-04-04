@@ -22,25 +22,29 @@ public class BotClientImpl implements BotClient {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(CONNECT_TIMEOUT_MILLIS);
         requestFactory.setReadTimeout(READ_TIMEOUT_MILLIS);
-        this.restClient = builder.baseUrl(properties.getBaseUrl()).requestFactory(requestFactory).build();
+        this.restClient = builder.baseUrl(properties.getBaseUrl())
+                .requestFactory(requestFactory)
+                .build();
     }
 
     @Override
     public void sendUpdate(LinkUpdateRequest update) {
         try {
             restClient
-                .post()
-                .uri("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(update)
-                .retrieve()
-                .toBodilessEntity();
+                    .post()
+                    .uri("/updates")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(update)
+                    .retrieve()
+                    .toBodilessEntity();
         } catch (RuntimeException exception) {
             log.atWarn()
-                .addKeyValue("linkId", update.id())
-                .addKeyValue("chatsCount", update.tgChatIds() == null ? 0 : update.tgChatIds().size())
-                .setCause(exception)
-                .log("bot_update_send_failed");
+                    .addKeyValue("linkId", update.id())
+                    .addKeyValue(
+                            "chatsCount",
+                            update.tgChatIds() == null ? 0 : update.tgChatIds().size())
+                    .setCause(exception)
+                    .log("bot_update_send_failed");
         }
     }
 }

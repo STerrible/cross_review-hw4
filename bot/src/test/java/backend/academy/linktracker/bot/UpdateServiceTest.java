@@ -23,8 +23,8 @@ class UpdateServiceTest {
     void handleSendsDispatchedReplyToTelegramClient() {
         RecordingTelegramClient telegramClient = new RecordingTelegramClient();
         ScrapperClient scrapperClient = new StubScrapperClient();
-        UpdateService service =
-            new UpdateService(telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
+        UpdateService service = new UpdateService(
+                telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
 
         service.handle(100L, "/help");
 
@@ -36,19 +36,19 @@ class UpdateServiceTest {
     void handleLinkUpdateSwallowsRuntimeExceptionFromTelegramClient() {
         TelegramClient telegramClient = new ThrowingTelegramClient();
         ScrapperClient scrapperClient = new StubScrapperClient();
-        UpdateService service =
-            new UpdateService(telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
+        UpdateService service = new UpdateService(
+                telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
 
         assertDoesNotThrow(() -> service.handleLinkUpdate(
-            new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(100L))));
+                new LinkUpdateRequest(1L, "https://github.com/user/repo", "changed", List.of(100L))));
     }
 
     @Test
     void handleSwallowsRuntimeExceptionFromTelegramClient() {
         TelegramClient telegramClient = new ThrowingTelegramClient();
         ScrapperClient scrapperClient = new StubScrapperClient();
-        UpdateService service =
-            new UpdateService(telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
+        UpdateService service = new UpdateService(
+                telegramClient, new CommandDispatcher(scrapperClient, new LinkService(scrapperClient)));
 
         assertDoesNotThrow(() -> service.handle(100L, "/help"));
     }
