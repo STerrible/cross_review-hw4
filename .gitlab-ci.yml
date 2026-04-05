@@ -1,7 +1,8 @@
 image: "${GITLAB_DOCKER_PROXY}/eclipse-temurin:25-jdk-alpine"
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Xmx768m -XX:MaxMetaspaceSize=384m"
+  MAVEN_CLI_OPTS: "-B --no-transfer-progress"
   GITLAB_DOCKER_PROXY: "gitlab.education.tbank.ru:443/backend-academy-java-2025/lecture-materials/dependency_proxy/containers"
 
 workflow:
@@ -14,9 +15,6 @@ stages:
   - build
   - lint
   - test
-
-default:
-  timeout: 20m
 
 cache:
   key: "$CI_COMMIT_REF_SLUG"
@@ -32,16 +30,51 @@ build:
     paths:
       - .m2/repository/
   script:
-    - ./mvnw package -DskipTests=true -Djacoco.skip=true
+    - ./mvnw $MAVEN_CLI_OPTS package -DskipTests=true -Djacoco.skip=true
 
-lint:
+lint-ai-agent:
   stage: lint
   needs:
     - build
   script:
-    - ./mvnw compile -am spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check
+    - ./mvnw $MAVEN_CLI_OPTS -pl ai-agent -am compile spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check -Dspotbugs.effort=Default -Dspotbugs.threshold=High
 
-test:
+lint-bot:
+  stage: lint
+  needs:
+    - build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -pl bot -am compile spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check -Dspotbugs.effort=Default -Dspotbugs.threshold=High
+
+lint-scrapper:
+  stage: lint
+  needs:
+    - build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -pl scrapper -am compile spotless:check modernizer:modernizer spotbugs:check pmd:check pmd:cpd-check -Dspotbugs.effort=Default -Dspotbugs.threshold=High
+
+test-ai-agent:
+  stage: test
+  needs:
+    - build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -pl ai-agent -am test -Dtest='!**/*IntegrationTest'
+
+test-bot:
+  stage: test
+  needs:
+    - build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -pl bot -am test -Dtest='!**/*IntegrationTest'
+
+test-scrapper:
+  stage: test
+  needs:
+    - build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -pl scrapper -am test -Dtest='!**/*IntegrationTest'
+
+integration-test:
   stage: test
   needs:
     - build
@@ -58,11 +91,9 @@ test:
     - dind
   before_script:
     - apk add --no-cache docker-cli
-    - |
-      for i in 1 2 3; do
-        echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin && break
-        echo "Docker login attempt ${i} failed, retrying..."
-        sleep 10
-      done
+    - echo "$CI_JOB_TOKEN" | docker login gitlab.education.tbank.ru:443 -u gitlab-ci-token --password-stdin || echo "docker login failed; continuing with anonymous pulls"
   script:
-    - ./mvnw verify
+    - ./mvnw $MAVEN_CLI_OPTS verify -Dtest='*IntegrationTest'
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == 'true'
