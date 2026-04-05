@@ -32,7 +32,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public boolean chatExists(long chatId) {
-        Integer count = jdbcTemplate.queryForObject("select count(*) from chats where chat_id = ?", Integer.class, chatId);
+        Integer count =
+                jdbcTemplate.queryForObject("select count(*) from chats where chat_id = ?", Integer.class, chatId);
         return count != null && count > 0;
     }
 
@@ -49,7 +50,9 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
         for (String filter : filters) {
             jdbcTemplate.update(
-                    "insert into subscription_filters(subscription_id, filter_value) values (?, ?)", subscriptionId, filter);
+                    "insert into subscription_filters(subscription_id, filter_value) values (?, ?)",
+                    subscriptionId,
+                    filter);
         }
 
         for (String tag : tags) {
@@ -111,7 +114,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public long linksCount(long chatId) {
-        Long count = jdbcTemplate.queryForObject("select count(*) from subscriptions where chat_id = ?", Long.class, chatId);
+        Long count =
+                jdbcTemplate.queryForObject("select count(*) from subscriptions where chat_id = ?", Long.class, chatId);
         return count == null ? 0L : count;
     }
 
@@ -134,7 +138,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        List<Long> ids = jdbcTemplate.query("select id from links where url = ?", (rs, rowNum) -> rs.getLong(1), link.toString());
+        List<Long> ids = jdbcTemplate.query(
+                "select id from links where url = ?", (rs, rowNum) -> rs.getLong(1), link.toString());
         return ids.isEmpty() ? OptionalLong.empty() : OptionalLong.of(ids.getFirst());
     }
 

@@ -49,12 +49,6 @@
 $env:BOT_TOKEN="ВАШ_ТОКЕН"
 ```
 
-После этого бот можно запустить следующей командой:
-
-```powershell
-.\mvnw.cmd -f bot\pom.xml spring-boot:run
-```
-
 > [!IMPORTANT]
 > Для запуска требуется **JDK 25 и выше**.
 
@@ -75,7 +69,7 @@ $env:BOT_TOKEN="ВАШ_ТОКЕН"
 Для запуска сервиса `scrapper` используйте:
 
 ```powershell
-..\mvnw.cmd spring-boot:run -DskipTests "-Dspring-boot.run.arguments=--spring.datasource.url=jdbc:postgresql://localhost:5433/scrapper --spring.datasource.username=scrapper --spring.datasource.password=scrapper"
+./mvnw -f scrapper/pom.xml spring-boot:run
 ```
 
 ---

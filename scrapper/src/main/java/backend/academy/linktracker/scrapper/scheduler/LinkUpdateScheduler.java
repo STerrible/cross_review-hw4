@@ -5,9 +5,9 @@ import backend.academy.linktracker.scrapper.client.LinkSourceClient;
 import backend.academy.linktracker.scrapper.model.LinkUpdateRequest;
 import backend.academy.linktracker.scrapper.repository.api.SubscriptionRepository;
 import java.net.URI;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,9 +37,9 @@ public class LinkUpdateScheduler {
             uris = repository.trackedUris(pageSize, page * pageSize);
             for (URI trackedUri : uris) {
                 Optional<Instant> updatedAt = clients.stream()
-                    .map(client -> client.fetchUpdatedAt(trackedUri))
-                    .flatMap(Optional::stream)
-                    .max(Comparator.naturalOrder());
+                        .map(client -> client.fetchUpdatedAt(trackedUri))
+                        .flatMap(Optional::stream)
+                        .max(Comparator.naturalOrder());
 
                 if (updatedAt.isEmpty()) {
                     continue;
@@ -60,12 +60,13 @@ public class LinkUpdateScheduler {
                 }
 
                 long linkId = repository.linkId(trackedUri).orElseThrow();
-                botClient.sendUpdate(new LinkUpdateRequest(linkId, trackedUri.toString(), "Обнаружены изменения", chats));
+                botClient.sendUpdate(
+                        new LinkUpdateRequest(linkId, trackedUri.toString(), "Обнаружены изменения", chats));
                 log.atInfo()
-                    .addKeyValue("link", trackedUri)
-                    .addKeyValue("linkId", linkId)
-                    .addKeyValue("chats", chats.size())
-                    .log("scheduled_update_sent");
+                        .addKeyValue("link", trackedUri)
+                        .addKeyValue("linkId", linkId)
+                        .addKeyValue("chats", chats.size())
+                        .log("scheduled_update_sent");
             }
             page++;
         } while (!uris.isEmpty());

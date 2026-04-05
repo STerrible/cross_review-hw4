@@ -42,7 +42,7 @@ public class InMemorySubscriptionRepository implements SubscriptionRepository {
     public LinkResponse addLink(long chatId, URI link, List<String> tags, List<String> filters) {
         Map<URI, StoredLink> links = byChat.computeIfAbsent(chatId, ignored -> new ConcurrentHashMap<>());
         StoredLink candidate =
-            new StoredLink(idGenerator.getAndIncrement(), link, List.copyOf(tags), List.copyOf(filters));
+                new StoredLink(idGenerator.getAndIncrement(), link, List.copyOf(tags), List.copyOf(filters));
         StoredLink previous = links.putIfAbsent(link, candidate);
         return (previous == null ? candidate : previous).toResponse();
     }
@@ -69,9 +69,12 @@ public class InMemorySubscriptionRepository implements SubscriptionRepository {
         if (links == null) {
             return List.of();
         }
-        return links.values().stream().skip(offset).limit(limit).map(StoredLink::toResponse).toList();
+        return links.values().stream()
+                .skip(offset)
+                .limit(limit)
+                .map(StoredLink::toResponse)
+                .toList();
     }
-
 
     @Override
     public long linksCount(long chatId) {
@@ -110,10 +113,10 @@ public class InMemorySubscriptionRepository implements SubscriptionRepository {
     @Override
     public OptionalLong linkId(URI link) {
         return byChat.values().stream()
-            .map(links -> links.get(link))
-            .filter(java.util.Objects::nonNull)
-            .mapToLong(StoredLink::id)
-            .findFirst();
+                .map(links -> links.get(link))
+                .filter(java.util.Objects::nonNull)
+                .mapToLong(StoredLink::id)
+                .findFirst();
     }
 
     public static final class StoredLink {

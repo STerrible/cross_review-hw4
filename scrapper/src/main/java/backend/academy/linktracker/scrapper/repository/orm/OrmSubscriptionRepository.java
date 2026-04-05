@@ -61,7 +61,8 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
     @Transactional
     public LinkResponse addLink(long chatId, URI link, List<String> tagValues, List<String> filters) {
         ChatEntity chat = chats.getReferenceById(chatId);
-        LinkEntity linkEntity = links.findByUrl(link.toString()).orElseGet(() -> links.save(new LinkEntity(link.toString())));
+        LinkEntity linkEntity =
+                links.findByUrl(link.toString()).orElseGet(() -> links.save(new LinkEntity(link.toString())));
         SubscriptionEntity subscription = new SubscriptionEntity(chat, linkEntity);
         subscription.getFilters().addAll(filters);
         for (String tagName : tagValues) {
@@ -83,8 +84,9 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
         if (found.isEmpty()) {
             return null;
         }
-        LinkResponse response = toResponse(found.get());
-        subscriptions.delete(found.get());
+        SubscriptionEntity subscription = found.orElseThrow();
+        LinkResponse response = toResponse(subscription);
+        subscriptions.delete(subscription);
         return response;
     }
 
@@ -119,7 +121,9 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        return links.findByUrl(link.toString()).map(LinkEntity::getId).stream().mapToLong(Long::longValue).findFirst();
+        return links.findByUrl(link.toString()).map(LinkEntity::getId).stream()
+                .mapToLong(Long::longValue)
+                .findFirst();
     }
 
     private LinkResponse toResponse(SubscriptionEntity entity) {
