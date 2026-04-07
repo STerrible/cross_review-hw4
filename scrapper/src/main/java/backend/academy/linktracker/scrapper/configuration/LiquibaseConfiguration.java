@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(prefix = "spring.liquibase", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class LiquibaseConfiguration {
+    private static final String DEFAULT_CHANGE_LOG = "classpath:/migrations/changelog-master.yaml";
 
     @Bean
-    public SpringLiquibase springLiquibase(
-            DataSource dataSource,
-            @Value("${spring.liquibase.change-log:classpath:/migrations/changelog-master.yaml}") String changeLog) {
+    public SpringLiquibase springLiquibase(DataSource dataSource, @Value("${spring.liquibase.change-log:"
+            + DEFAULT_CHANGE_LOG + "}") String changeLog) {
         SpringLiquibase liquibase = new SpringLiquibase();
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog(changeLog);
