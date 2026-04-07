@@ -7,10 +7,13 @@ import backend.academy.linktracker.scrapper.repository.api.SubscriptionRepositor
 import java.net.URI;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +36,10 @@ public class LinkUpdateScheduler {
         int page = 0;
         int pageSize = 100;
         List<URI> uris;
+        Set<URI> activeUris = new HashSet<>();
         do {
             uris = repository.trackedUris(pageSize, page * pageSize);
+            activeUris.addAll(uris);
             for (URI trackedUri : uris) {
                 Optional<Instant> updatedAt = clients.stream()
                         .map(client -> client.fetchUpdatedAt(trackedUri))
@@ -46,12 +51,17 @@ public class LinkUpdateScheduler {
                 }
 
                 Instant currentUpdatedAt = updatedAt.orElseThrow();
-                Instant previous = lastSeenByUri.putIfAbsent(trackedUri, currentUpdatedAt);
-                if (previous != null && !currentUpdatedAt.isAfter(previous)) {
+                AtomicBoolean shouldSendUpdate = new AtomicBoolean(false);
+                lastSeenByUri.compute(trackedUri, (uri, lastSeen) -> {
+                    Instant knownLastSeen = lastSeen == null ? Instant.EPOCH : lastSeen;
+                    if (currentUpdatedAt.isAfter(knownLastSeen)) {
+                        shouldSendUpdate.set(true);
+                        return currentUpdatedAt;
+                    }
+                    return knownLastSeen;
+                });
+                if (!shouldSendUpdate.get()) {
                     continue;
-                }
-                if (previous != null) {
-                    lastSeenByUri.put(trackedUri, currentUpdatedAt);
                 }
 
                 List<Long> chats = repository.chatsTracking(trackedUri);
@@ -70,5 +80,6 @@ public class LinkUpdateScheduler {
             }
             page++;
         } while (!uris.isEmpty());
+        lastSeenByUri.keySet().retainAll(activeUris);
     }
 }

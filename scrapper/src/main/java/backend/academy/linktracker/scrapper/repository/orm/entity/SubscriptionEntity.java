@@ -4,7 +4,6 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,12 +31,12 @@ public class SubscriptionEntity {
     @JoinColumn(name = "link_id")
     private LinkEntity link;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "subscription_filters", joinColumns = @JoinColumn(name = "subscription_id"))
     @Column(name = "filter_value", nullable = false)
     private List<String> filters = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
             name = "subscription_tags",
             joinColumns = @JoinColumn(name = "subscription_id"),
