@@ -79,6 +79,7 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
+    @Transactional
     public LinkResponse removeLink(long chatId, URI link) {
         var found = subscriptions.findByChatChatIdAndLinkUrl(chatId, link.toString());
         if (found.isEmpty()) {
@@ -91,6 +92,7 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<LinkResponse> links(long chatId, int limit, int offset) {
         int page = offset / limit;
         return subscriptions.findAllByChatChatId(chatId, PageRequest.of(page, limit)).stream()
@@ -104,15 +106,16 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<URI> trackedUris(int limit, int offset) {
         int page = offset / limit;
         return subscriptions.findDistinctSubscriptions(PageRequest.of(page, limit)).stream()
                 .map(s -> URI.create(s.getLink().getUrl()))
-                .distinct()
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Long> chatsTracking(URI link) {
         return subscriptions.findAllByLinkUrl(link.toString()).stream()
                 .map(subscription -> subscription.getChat().getChatId())
@@ -121,7 +124,9 @@ public class OrmSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        return links.findByUrl(link.toString()).map(LinkEntity::getId).stream()
+        return links.findByUrl(link.toString())
+                .map(LinkEntity::getId)
+                .stream()
                 .mapToLong(Long::longValue)
                 .findFirst();
     }
