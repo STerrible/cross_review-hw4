@@ -22,7 +22,7 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public void registerChat(long chatId) {
-        jdbcTemplate.update("insert into chats(chat_id) values (?)", chatId);
+        jdbcTemplate.update("insert into chats(chat_id) values (?) on conflict (chat_id) do nothing", chatId);
     }
 
     @Override
@@ -32,9 +32,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public boolean chatExists(long chatId) {
-        Integer count =
-                jdbcTemplate.queryForObject("select count(*) from chats where chat_id = ?", Integer.class, chatId);
-        return count != null && count > 0;
+        Boolean exists = jdbcTemplate.queryForObject("select exists(select 1 from chats where chat_id = ?)", Boolean.class, chatId);
+        return Boolean.TRUE.equals(exists);
     }
 
     @Override
@@ -46,11 +45,16 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
                 link.toString());
 
         Long subscriptionId = jdbcTemplate.queryForObject(
-                "insert into subscriptions(chat_id, link_id) values (?, ?) returning id", Long.class, chatId, linkId);
+                "insert into subscriptions(chat_id, link_id) values (?, ?) "
+                        + "on conflict (chat_id, link_id) do update set chat_id = excluded.chat_id returning id",
+                Long.class,
+                chatId,
+                linkId);
 
         for (String filter : filters) {
             jdbcTemplate.update(
-                    "insert into subscription_filters(subscription_id, filter_value) values (?, ?)",
+                    "insert into subscription_filters(subscription_id, filter_value) values (?, ?) "
+                            + "on conflict (subscription_id, filter_value) do nothing",
                     subscriptionId,
                     filter);
         }
@@ -61,7 +65,10 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
                     Long.class,
                     tag);
             jdbcTemplate.update(
-                    "insert into subscription_tags(subscription_id, tag_id) values (?, ?)", subscriptionId, tagId);
+                    "insert into subscription_tags(subscription_id, tag_id) values (?, ?) "
+                            + "on conflict (subscription_id, tag_id) do nothing",
+                    subscriptionId,
+                    tagId);
         }
 
         return new LinkResponse(linkId, link, tags, filters);
@@ -122,7 +129,7 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
     @Override
     public List<URI> trackedUris(int limit, int offset) {
         return jdbcTemplate.query(
-                "select distinct l.url from links l join subscriptions s on s.link_id = l.id order by l.id limit ? offset ?",
+                "select distinct l.url from links l join subscriptions s on s.link_id = l.id order by l.url limit ? offset ?",
                 (rs, rowNum) -> URI.create(rs.getString(1)),
                 limit,
                 offset);
@@ -138,9 +145,8 @@ public class SqlSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public OptionalLong linkId(URI link) {
-        List<Long> ids = jdbcTemplate.query(
-                "select id from links where url = ?", (rs, rowNum) -> rs.getLong(1), link.toString());
-        return ids.isEmpty() ? OptionalLong.empty() : OptionalLong.of(ids.getFirst());
+        Long id = jdbcTemplate.queryForObject("select id from links where url = ? limit 1", Long.class, link.toString());
+        return id == null ? OptionalLong.empty() : OptionalLong.of(id);
     }
 
     private List<String> findTags(long subscriptionId) {

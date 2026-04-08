@@ -3,6 +3,7 @@ package backend.academy.linktracker.scrapper.client;
 import backend.academy.linktracker.scrapper.properties.StackoverflowProperties;
 import java.net.URI;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public class StackoverflowClient implements LinkSourceClient {
     }
 
     @Override
-    public Optional<Instant> fetchUpdatedAt(URI uri) {
+    public Optional<LinkSourceUpdate> fetchUpdate(URI uri) {
         if (!STACKOVERFLOW_HOST.equalsIgnoreCase(uri.getHost())) {
             return Optional.empty();
         }
@@ -48,12 +49,35 @@ public class StackoverflowClient implements LinkSourceClient {
                     && !properties.getAccessToken().isBlank()) {
                 request.header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.getAccessToken());
             }
-            QuestionsResponse response = request.retrieve().body(QuestionsResponse.class);
-            if (response == null || response.items() == null || response.items().isEmpty()) {
+            QuestionsResponse questionResponse = request.retrieve().body(QuestionsResponse.class);
+            if (questionResponse == null
+                    || questionResponse.items() == null
+                    || questionResponse.items().isEmpty()) {
                 return Optional.empty();
             }
-            return Optional.ofNullable(response.items().getFirst().lastActivityDate())
-                    .map(Instant::ofEpochSecond);
+            QuestionResponse question = questionResponse.items().getFirst();
+
+            AnswersResponse answersResponse = restClient
+                    .get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/questions/{id}/answers")
+                            .queryParam("site", "stackoverflow")
+                            .queryParam("sort", "creation")
+                            .queryParam("order", "desc")
+                            .queryParam("pagesize", 20)
+                            .queryParam("filter", "withbody")
+                            .queryParam("key", properties.getKey())
+                            .build(parts[2]))
+                    .retrieve()
+                    .body(AnswersResponse.class);
+            if (answersResponse == null || answersResponse.items() == null) {
+                return Optional.empty();
+            }
+            return answersResponse.items().stream()
+                    .filter(answer -> answer != null && answer.creationDate() != null)
+                    .max(Comparator.comparing(AnswerResponse::creationDate))
+                    .map(answer -> new LinkSourceUpdate(
+                            Instant.ofEpochSecond(answer.creationDate()), formatDescription(question, answer)));
         } catch (HttpClientErrorException exception) {
             log.atWarn()
                     .addKeyValue("uri", uri)
@@ -70,6 +94,39 @@ public class StackoverflowClient implements LinkSourceClient {
     private record QuestionsResponse(List<QuestionResponse> items) {}
 
     private record QuestionResponse(
+            String title,
             @com.fasterxml.jackson.annotation.JsonProperty("last_activity_date")
             Long lastActivityDate) {}
+
+    private record AnswersResponse(List<AnswerResponse> items) {}
+
+    private record AnswerResponse(
+            @com.fasterxml.jackson.annotation.JsonProperty("creation_date")
+            Long creationDate,
+            @com.fasterxml.jackson.annotation.JsonProperty("body_markdown")
+            String bodyMarkdown,
+            OwnerResponse owner) {}
+
+    private record OwnerResponse(
+            @com.fasterxml.jackson.annotation.JsonProperty("display_name")
+            String displayName) {}
+
+    private String formatDescription(QuestionResponse question, AnswerResponse answer) {
+        String title = question.title() == null ? "(без темы)" : question.title();
+        String author =
+                answer.owner() == null || answer.owner().displayName() == null ? "unknown" : answer.owner().displayName();
+        String createdAt = answer.creationDate() == null
+                ? "unknown-time"
+                : Instant.ofEpochSecond(answer.creationDate()).toString();
+        String preview = sanitizePreview(answer.bodyMarkdown(), 200);
+        return "Ответ на вопрос: %s%nАвтор: %s%nСоздано: %s%nПревью: %s".formatted(title, author, createdAt, preview);
+    }
+
+    private String sanitizePreview(String source, int limit) {
+        if (source == null || source.isBlank()) {
+            return "(пусто)";
+        }
+        String normalized = source.replaceAll("\\s+", " ").trim();
+        return normalized.length() <= limit ? normalized : normalized.substring(0, limit);
+    }
 }
